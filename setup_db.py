@@ -3,12 +3,7 @@ Run this script ONCE to set up the database and create the default admin.
 Usage: python setup_db.py
 """
 import os
-try:
-    import MySQLdb
-except ImportError:
-    import pymysql
-    pymysql.install_as_MySQLdb()
-    import MySQLdb
+import pymysql
 from werkzeug.security import generate_password_hash
 from dotenv import load_dotenv
 
@@ -22,7 +17,7 @@ DB = os.getenv('MYSQL_DB', 'canteen_db')
 print(f"Connecting to MySQL at {HOST} as {USER}...")
 
 # Connect without DB first to create it
-conn = MySQLdb.connect(host=HOST, user=USER, passwd=PASSWORD)
+conn = pymysql.connect(host=HOST, user=USER, password=PASSWORD, cursorclass=pymysql.cursors.DictCursor)
 cur = conn.cursor()
 cur.execute(f"CREATE DATABASE IF NOT EXISTS `{DB}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
 conn.commit()
@@ -31,7 +26,7 @@ conn.close()
 print(f"Database '{DB}' ready.")
 
 # Now connect to the DB and run schema
-conn = MySQLdb.connect(host=HOST, user=USER, passwd=PASSWORD, db=DB)
+conn = pymysql.connect(host=HOST, user=USER, password=PASSWORD, database=DB, cursorclass=pymysql.cursors.DictCursor)
 cur = conn.cursor()
 
 # Create tables
@@ -143,7 +138,7 @@ for k, v in settings_data:
 
 # Sample menu items
 cur.execute("SELECT COUNT(*) as cnt FROM menu_items")
-if cur.fetchone()[0] == 0:
+if cur.fetchone()['cnt'] == 0:
     menu_data = [
         ('Idli Sambar', 'Breakfast', 30.00, 'Soft idlis with sambar and chutney', 50, '08:00', '11:00'),
         ('Poha', 'Breakfast', 25.00, 'Flattened rice with spices', 40, '08:00', '11:00'),
@@ -163,7 +158,7 @@ if cur.fetchone()[0] == 0:
 
 # Sample students
 cur.execute("SELECT COUNT(*) as cnt FROM students")
-if cur.fetchone()[0] == 0:
+if cur.fetchone()['cnt'] == 0:
     students_data = [
         ('Priya Sharma', 'AM2201', 'Computer Science', 2, '9876543210', 'priya@college.edu', 200.00),
         ('Rahul Verma', 'AM2202', 'Electronics', 2, '9876543211', 'rahul@college.edu', 150.00),
