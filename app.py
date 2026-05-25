@@ -40,18 +40,25 @@ def close_db(error):
 
 def query(sql, args=None, one=False, commit=False):
     db = get_db()
-    with db.cursor() as cur:
+    cur = db.cursor()
+    try:
         cur.execute(sql, args or ())
         if commit:
             db.commit()
             return cur.lastrowid
-        return cur.fetchone() if one else cur.fetchall()
+        result = cur.fetchone() if one else [dict(r) for r in cur.fetchall()]
+        return result
+    finally:
+        cur.close()
 
 def execute(sql, args=None):
     db = get_db()
-    with db.cursor() as cur:
+    cur = db.cursor()
+    try:
         cur.execute(sql, args or ())
-    db.commit()
+        db.commit()
+    finally:
+        cur.close()
 
 def init_db():
     """Create all tables and default data if they don't exist."""
@@ -273,8 +280,6 @@ def dashboard():
                             o.payment_status, o.order_status, o.order_time
                             FROM orders o JOIN students s ON o.student_id=s.id
                             WHERE DATE(o.created_date)=%s ORDER BY o.order_time DESC""", (today,))
-    # Convert to plain dicts so we can add the 'items' key
-    today_orders = [dict(o) for o in today_orders]
     for o in today_orders:
         o['items'] = query("""SELECT mi.name, oi.quantity FROM order_items oi
                               JOIN menu_items mi ON oi.menu_item_id=mi.id
@@ -464,7 +469,6 @@ def orders():
         sql += " AND o.order_status=%s"; params.append(status_filter.lower())
     sql += " ORDER BY o.created_date DESC"
     orders_list = query(sql, params)
-    orders_list = [dict(o) for o in orders_list]
     for o in orders_list:
         o['items'] = query("""SELECT mi.name, oi.quantity, oi.unit_price, oi.subtotal
                               FROM order_items oi JOIN menu_items mi ON oi.menu_item_id=mi.id
