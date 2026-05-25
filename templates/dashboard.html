@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block content %}
+<!-- Stat Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <div class="stat-card stat-orange">
+      <div class="stat-icon"><i class="bi bi-journal-text"></i></div>
+      <div class="stat-value">{{ total_menu }}</div>
+      <div class="stat-label">Total Menu Items</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="stat-card stat-blue">
+      <div class="stat-icon"><i class="bi bi-bag-check"></i></div>
+      <div class="stat-value">{{ orders_today }}</div>
+      <div class="stat-label">Orders Today</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="stat-card stat-green">
+      <div class="stat-icon"><i class="bi bi-currency-rupee"></i></div>
+      <div class="stat-value">₹{{ "%.0f"|format(revenue_today) }}</div>
+      <div class="stat-label">Revenue Today</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="stat-card stat-red">
+      <div class="stat-icon"><i class="bi bi-clock-history"></i></div>
+      <div class="stat-value">{{ pending_payments }}</div>
+      <div class="stat-label">Pending Payments</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <!-- Today's Orders -->
+  <div class="col-lg-8">
+    <div class="card shadow-sm h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-list-check me-2 text-orange"></i>Today's Orders</span>
+        <a href="{{ url_for('orders') }}" class="btn btn-sm btn-outline-orange">View All</a>
+      </div>
+      <div class="card-body p-0">
+        {% if today_orders %}
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="table-light"><tr>
+              <th>#</th><th>Student</th><th>Items</th><th>Amount</th><th>Payment</th><th>Status</th>
+            </tr></thead>
+            <tbody>
+            {% for o in today_orders %}
+            <tr>
+              <td class="text-muted small">#{{ o.id }}</td>
+              <td class="fw-semibold">{{ o.student_name }}</td>
+              <td class="small text-muted">
+                {% for item in o.items %}{{ item.name }}{% if not loop.last %}, {% endif %}{% endfor %}
+              </td>
+              <td>₹{{ "%.0f"|format(o.total_amount) }}</td>
+              <td>
+                {% if o.payment_status == 'paid' %}
+                  <span class="badge bg-success">Paid</span>
+                {% else %}
+                  <span class="badge bg-danger">Pending</span>
+                {% endif %}
+              </td>
+              <td>{{ o.order_status|capitalize|replace('_',' ') }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="empty-state py-4"><i class="bi bi-bag-x"></i><p>No orders today yet</p></div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Most Ordered + Week Revenue -->
+  <div class="col-lg-4">
+    {% if most_ordered %}
+    <div class="card shadow-sm mb-3 most-ordered-card">
+      <div class="card-body text-center">
+        <div class="mb-2"><i class="bi bi-trophy-fill text-warning fs-2"></i></div>
+        <div class="small text-muted mb-1">Most Ordered Today</div>
+        <div class="fw-bold fs-5 text-orange">{{ most_ordered.name }}</div>
+        <div class="badge bg-warning text-dark mt-1">{{ most_ordered.total_qty }} orders</div>
+      </div>
+    </div>
+    {% endif %}
+    <div class="card shadow-sm">
+      <div class="card-header"><i class="bi bi-bar-chart me-2 text-orange"></i>Revenue This Week</div>
+      <div class="card-body">
+        <div class="week-chart">
+          {% set max_rev = week_revenue|map(attribute='revenue')|max if week_revenue else 1 %}
+          {% for day in week_revenue %}
+          <div class="week-bar-wrap">
+            <div class="week-bar-label">₹{{ "%.0f"|format(day.revenue) }}</div>
+            <div class="week-bar" style="height:{{ [((day.revenue / (max_rev if max_rev > 0 else 1)) * 80)|int, 4]|max }}px"></div>
+            <div class="week-day">{{ day.day }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Latest Notices -->
+{% if latest_notices %}
+<div class="card shadow-sm">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-megaphone me-2 text-orange"></i>Latest Notices</span>
+    <a href="{{ url_for('notices') }}" class="btn btn-sm btn-outline-orange">All Notices</a>
+  </div>
+  <div class="card-body">
+    <div class="row g-3">
+      {% for n in latest_notices %}
+      <div class="col-md-4">
+        <div class="notice-card">
+          <div class="notice-title">{{ n.title }}</div>
+          <div class="notice-msg">{{ n.message[:100] }}{% if n.message|length > 100 %}...{% endif %}</div>
+          <div class="notice-date small text-muted mt-1">
+            <i class="bi bi-calendar3 me-1"></i>{{ n.posted_date.strftime('%d %b %Y') if n.posted_date else '' }}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

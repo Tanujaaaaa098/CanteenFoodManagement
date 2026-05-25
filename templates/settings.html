@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% block title %}Settings{% endblock %}
+{% block page_title %}Settings{% endblock %}
+{% block content %}
+<div class="row g-3">
+  <!-- Canteen Settings -->
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-header"><i class="bi bi-shop me-2 text-orange"></i>Canteen Settings</div>
+      <div class="card-body">
+        <form method="POST">
+          <input type="hidden" name="action" value="update_settings"/>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Canteen Name</label>
+            <input type="text" name="canteen_name" class="form-control" value="{{ settings.get('canteen_name','College Canteen') }}"/>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">College Name</label>
+            <input type="text" name="college_name" class="form-control" value="{{ settings.get('college_name','Engineering College') }}"/>
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-6">
+              <label class="form-label fw-semibold">Opening Time</label>
+              <input type="time" name="opening_time" class="form-control" value="{{ settings.get('opening_time','08:00') }}"/>
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">Closing Time</label>
+              <input type="time" name="closing_time" class="form-control" value="{{ settings.get('closing_time','20:00') }}"/>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-orange">
+            <i class="bi bi-save me-1"></i>Save Settings
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Change Password -->
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-header"><i class="bi bi-shield-lock me-2 text-orange"></i>Change Password</div>
+      <div class="card-body">
+        <form method="POST" id="pwForm">
+          <input type="hidden" name="action" value="change_password"/>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Current Password</label>
+            <div class="input-group">
+              <input type="password" name="current_password" class="form-control" required id="curPw"/>
+              <button type="button" class="btn btn-outline-secondary" onclick="togglePw('curPw')"><i class="bi bi-eye"></i></button>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">New Password</label>
+            <div class="input-group">
+              <input type="password" name="new_password" class="form-control" required id="newPw" minlength="6"/>
+              <button type="button" class="btn btn-outline-secondary" onclick="togglePw('newPw')"><i class="bi bi-eye"></i></button>
+            </div>
+          </div>
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Confirm New Password</label>
+            <div class="input-group">
+              <input type="password" name="confirm_password" class="form-control" required id="confPw" minlength="6"/>
+              <button type="button" class="btn btn-outline-secondary" onclick="togglePw('confPw')"><i class="bi bi-eye"></i></button>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-orange" id="pwBtn">
+            <span class="spinner-border spinner-border-sm d-none me-1" id="pwSpinner"></span>
+            <i class="bi bi-key me-1"></i>Change Password
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Admin Info -->
+    <div class="card shadow-sm mt-3">
+      <div class="card-header"><i class="bi bi-person-circle me-2 text-orange"></i>Admin Info</div>
+      <div class="card-body">
+        <div class="d-flex align-items-center gap-3">
+          <div class="admin-avatar-lg">{{ current_user.name[0].upper() }}</div>
+          <div>
+            <div class="fw-bold fs-5">{{ current_user.name }}</div>
+            <div class="text-muted small">{{ current_user.email }}</div>
+            <span class="badge bg-orange-badge mt-1">Administrator</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function togglePw(id) {
+  const el = document.getElementById(id);
+  el.type = el.type === 'password' ? 'text' : 'password';
+}
+document.getElementById('pwForm').addEventListener('submit', function() {
+  document.getElementById('pwSpinner').classList.remove('d-none');
+  document.getElementById('pwBtn').disabled = true;
+});
+</script>
+{% endblock %}

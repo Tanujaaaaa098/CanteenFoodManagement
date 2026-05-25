@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block title %}Order #{{ order.id }}{% endblock %}
+{% block page_title %}Order #{{ order.id }}{% endblock %}
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card shadow-sm mb-3">
+      <div class="card-header"><i class="bi bi-person me-2 text-orange"></i>Student Info</div>
+      <div class="card-body">
+        <div class="fw-bold fs-5">{{ order.student_name }}</div>
+        <div class="text-muted small mb-2">{{ order.roll_number }}</div>
+        <div class="small"><i class="bi bi-diagram-3 me-1 text-orange"></i>{{ order.branch or '—' }}</div>
+        <div class="small"><i class="bi bi-telephone me-1 text-orange"></i>{{ order.phone or '—' }}</div>
+      </div>
+    </div>
+    <div class="card shadow-sm">
+      <div class="card-header"><i class="bi bi-info-circle me-2 text-orange"></i>Order Info</div>
+      <div class="card-body">
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-muted small">Order Time</span>
+          <span class="small fw-semibold">{{ order.order_time.strftime('%d %b %Y %H:%M') if order.order_time else '—' }}</span>
+        </div>
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-muted small">Pickup Time</span>
+          <span class="small fw-semibold">{{ order.pickup_time or '—' }}</span>
+        </div>
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-muted small">Payment Method</span>
+          <span class="small fw-semibold text-capitalize">{{ order.payment_method }}</span>
+        </div>
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-muted small">Payment Status</span>
+          {% if order.payment_status=='paid' %}
+            <span class="badge bg-success">Paid</span>
+          {% else %}
+            <span class="badge bg-danger">Pending</span>
+          {% endif %}
+        </div>
+        <div class="d-flex justify-content-between">
+          <span class="text-muted small">Order Status</span>
+          {% if order.order_status=='pending' %}<span class="badge bg-warning text-dark">Pending</span>
+          {% elif order.order_status=='preparing' %}<span class="badge bg-primary">Preparing</span>
+          {% elif order.order_status=='ready' %}<span class="badge bg-orange-badge">Ready</span>
+          {% elif order.order_status=='delivered' %}<span class="badge bg-success">Delivered</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="card shadow-sm mb-3">
+      <div class="card-header"><i class="bi bi-cart me-2 text-orange"></i>Order Items</div>
+      <div class="card-body p-0">
+        <table class="table mb-0">
+          <thead class="table-light"><tr><th>Item</th><th>Qty</th><th>Unit Price</th><th>Subtotal</th></tr></thead>
+          <tbody>
+          {% for item in items %}
+          <tr>
+            <td class="fw-semibold">{{ item.item_name }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>₹{{ "%.2f"|format(item.unit_price) }}</td>
+            <td>₹{{ "%.2f"|format(item.subtotal) }}</td>
+          </tr>
+          {% endfor %}
+          </tbody>
+          <tfoot class="table-light">
+            <tr><td colspan="3" class="text-end fw-bold">Total</td><td class="fw-bold text-orange">₹{{ "%.2f"|format(order.total_amount) }}</td></tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-header"><i class="bi bi-arrow-repeat me-2 text-orange"></i>Update Order Status</div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('update_order_status', order_id=order.id) }}" class="d-flex gap-2 flex-wrap">
+          {% for st in ['pending','preparing','ready','delivered'] %}
+          <button type="submit" name="status" value="{{ st }}"
+                  class="btn {% if order.order_status==st %}btn-orange{% else %}btn-outline-secondary{% endif %}">
+            {{ st|capitalize }}
+          </button>
+          {% endfor %}
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="mt-3">
+  <a href="{{ url_for('orders') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back to Orders</a>
+</div>
+{% endblock %}

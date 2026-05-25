@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+{% block title %}New Order{% endblock %}
+{% block page_title %}Place New Order{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-9">
+    <div class="card shadow-sm">
+      <div class="card-header"><i class="bi bi-bag-plus me-2 text-orange"></i>New Order</div>
+      <div class="card-body">
+        <form method="POST" id="orderForm">
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Student <span class="text-danger">*</span></label>
+              <select name="student_id" class="form-select" required id="studentSelect" onchange="loadBalance(this.value)">
+                <option value="">-- Select Student --</option>
+                {% for s in students %}
+                <option value="{{ s.id }}">{{ s.name }} ({{ s.roll_number }})</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-semibold">Pickup Time</label>
+              <input type="text" name="pickup_time" class="form-control" placeholder="e.g. 12:30 PM"/>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-semibold">Payment Method</label>
+              <select name="payment_method" class="form-select" id="paymentMethod">
+                <option value="cash">Cash</option>
+                <option value="prepaid">Prepaid Balance</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="balanceInfo" class="alert alert-info d-none py-2 small mb-3">
+            <i class="bi bi-wallet2 me-1"></i>Prepaid Balance: <strong id="balanceAmt">₹0.00</strong>
+          </div>
+
+          <!-- Order Items -->
+          <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <label class="form-label fw-semibold mb-0">Order Items <span class="text-danger">*</span></label>
+              <button type="button" class="btn btn-sm btn-outline-orange" onclick="addItemRow()">
+                <i class="bi bi-plus me-1"></i>Add Item
+              </button>
+            </div>
+            <div id="itemsContainer">
+              <div class="item-row row g-2 mb-2 align-items-center">
+                <div class="col-md-6">
+                  <select name="item_id[]" class="form-select item-select" onchange="updateRow(this)" required>
+                    <option value="">-- Select Item --</option>
+                    {% for item in menu_items %}
+                    <option value="{{ item.id }}" data-price="{{ item.price }}" data-qty="{{ item.available_quantity }}">
+                      {{ item.name }} (₹{{ "%.2f"|format(item.price) }}) [{{ item.available_quantity }} left]
+                    </option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-2">
+                  <input type="number" name="quantity[]" class="form-control item-qty" min="1" value="1" onchange="calcTotal()" placeholder="Qty"/>
+                </div>
+                <div class="col-md-3">
+                  <div class="input-group">
+                    <span class="input-group-text">₹</span>
+                    <input type="text" class="form-control item-subtotal" readonly placeholder="0.00"/>
+                  </div>
+                </div>
+                <div class="col-md-1">
+                  <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeRow(this)"><i class="bi bi-x"></i></button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded mb-3">
+            <span class="fw-bold">Running Total:</span>
+            <span class="fw-bold fs-5 text-orange" id="runningTotal">₹0.00</span>
+          </div>
+
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-orange" id="submitBtn">
+              <span class="spinner-border spinner-border-sm d-none me-1" id="spinner"></span>
+              <i class="bi bi-bag-check me-1"></i>Place Order
+            </button>
+            <a href="{{ url_for('orders') }}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const menuItems = {
+  {% for item in menu_items %}
+  {{ item.id }}: { price: {{ item.price }}, qty: {{ item.available_quantity }}, name: "{{ item.name }}" },
+  {% endfor %}
+};
+
+function updateRow(sel) {
+  const row = sel.closest('.item-row');
+  const id = sel.value;
+  const qtyInput = row.querySelector('.item-qty');
+  const subtotalInput = row.querySelector('.item-subtotal');
+  if (id && menuItems[id]) {
+    qtyInput.max = menuItems[id].qty;
+    const qty = parseInt(qtyInput.value) || 1;
+    subtotalInput.value = (menuItems[id].price * qty).toFixed(2);
+  } else {
+    subtotalInput.value = '';
+  }
+  calcTotal();
+}
+
+function calcTotal() {
+  let total = 0;
+  document.querySelectorAll('.item-row').forEach(row => {
+    const sel = row.querySelector('.item-select');
+    const qty = parseInt(row.querySelector('.item-qty').value) || 0;
+    const id = sel.value;
+    if (id && menuItems[id]) {
+      const sub = menuItems[id].price * qty;
+      row.querySelector('.item-subtotal').value = sub.toFixed(2);
+      total += sub;
+    }
+  });
+  document.getElementById('runningTotal').textContent = '₹' + total.toFixed(2);
+}
+
+function addItemRow() {
+  const container = document.getElementById('itemsContainer');
+  const first = container.querySelector('.item-row');
+  const clone = first.cloneNode(true);
+  clone.querySelector('.item-select').value = '';
+  clone.querySelector('.item-qty').value = 1;
+  clone.querySelector('.item-subtotal').value = '';
+  clone.querySelector('.item-select').onchange = function() { updateRow(this); };
+  clone.querySelector('.item-qty').onchange = calcTotal;
+  container.appendChild(clone);
+}
+
+function removeRow(btn) {
+  const rows = document.querySelectorAll('.item-row');
+  if (rows.length > 1) { btn.closest('.item-row').remove(); calcTotal(); }
+}
+
+function loadBalance(studentId) {
+  if (!studentId) { document.getElementById('balanceInfo').classList.add('d-none'); return; }
+  fetch(`/api/student_balance/${studentId}`)
+    .then(r => r.json()).then(d => {
+      if (d.balance !== undefined) {
+        document.getElementById('balanceAmt').textContent = '₹' + parseFloat(d.balance).toFixed(2);
+        document.getElementById('balanceInfo').classList.remove('d-none');
+      }
+    });
+}
+
+document.getElementById('orderForm').addEventListener('submit', function() {
+  document.getElementById('spinner').classList.remove('d-none');
+  document.getElementById('submitBtn').disabled = true;
+});
+</script>
+{% endblock %}

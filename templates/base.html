@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}Canteen{% endblock %} | {{ settings.get('canteen_name','College Canteen') }}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}"/>
+</head>
+<body>
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="admin-avatar">{{ current_user.name[0].upper() }}</div>
+    <div class="admin-info">
+      <div class="admin-name">{{ current_user.name }}</div>
+      <div class="admin-role">Administrator</div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <a href="{{ url_for('dashboard') }}" class="nav-link {% if request.endpoint=='dashboard' %}active{% endif %}">
+      <i class="bi bi-speedometer2"></i> Dashboard
+    </a>
+    <a href="{{ url_for('menu') }}" class="nav-link {% if 'menu' in request.endpoint %}active{% endif %}">
+      <i class="bi bi-journal-text"></i> Menu
+    </a>
+    <a href="{{ url_for('students') }}" class="nav-link {% if 'student' in request.endpoint %}active{% endif %}">
+      <i class="bi bi-people"></i> Students
+    </a>
+    <a href="{{ url_for('orders') }}" class="nav-link {% if 'order' in request.endpoint %}active{% endif %}">
+      <i class="bi bi-bag-check"></i> Orders
+    </a>
+    <a href="{{ url_for('payments') }}" class="nav-link {% if request.endpoint=='payments' %}active{% endif %}">
+      <i class="bi bi-credit-card"></i> Payments
+    </a>
+    <a href="{{ url_for('reports') }}" class="nav-link {% if request.endpoint=='reports' %}active{% endif %}">
+      <i class="bi bi-bar-chart-line"></i> Reports
+    </a>
+    <a href="{{ url_for('notices') }}" class="nav-link {% if request.endpoint=='notices' %}active{% endif %}">
+      <i class="bi bi-megaphone"></i> Notices
+    </a>
+    <a href="{{ url_for('settings_page') }}" class="nav-link {% if request.endpoint=='settings_page' %}active{% endif %}">
+      <i class="bi bi-gear"></i> Settings
+    </a>
+    <div class="sidebar-divider"></div>
+    <a href="{{ url_for('logout') }}" class="nav-link logout-link">
+      <i class="bi bi-box-arrow-left"></i> Logout
+    </a>
+  </nav>
+</div>
+
+<!-- Main content -->
+<div class="main-content" id="mainContent">
+  <div class="topbar">
+    <button class="btn btn-sm sidebar-toggle" id="sidebarToggle">
+      <i class="bi bi-list fs-4"></i>
+    </button>
+    <div class="topbar-title">{% block page_title %}Dashboard{% endblock %}</div>
+    <div class="topbar-right">
+      <span class="text-muted small">{{ settings.get('canteen_name','College Canteen') }}</span>
+    </div>
+  </div>
+
+  {% if low_stock %}
+  <div class="alert alert-warning alert-dismissible fade show mx-3 mt-2 mb-0 low-stock-banner" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    <strong>Low Stock Alert!</strong>
+    {% for item in low_stock %}
+      <span class="badge bg-warning text-dark ms-1">{{ item.name }} ({{ item.available_quantity }} left)</span>
+    {% endfor %}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  {% endif %}
+
+  <div class="content-area">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for cat, msg in messages %}
+          <div class="alert alert-{{ cat }} alert-dismissible fade show" role="alert">
+            <i class="bi bi-{% if cat=='success' %}check-circle{% elif cat=='danger' %}x-circle{% elif cat=='warning' %}exclamation-triangle{% else %}info-circle{% endif %}-fill me-2"></i>
+            {{ msg }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-0">
+        <h5 class="modal-title"><i class="bi bi-trash text-danger me-2"></i>Confirm Delete</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="deleteModalBody">Are you sure you want to delete this item?</div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <form id="deleteForm" method="POST">
+          <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1"></i>Delete</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

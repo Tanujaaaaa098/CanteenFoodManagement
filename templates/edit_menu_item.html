@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}Edit Menu Item{% endblock %}
+{% block page_title %}Edit Menu Item{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card shadow-sm">
+      <div class="card-header"><i class="bi bi-pencil me-2 text-orange"></i>Edit: {{ item.name }}</div>
+      <div class="card-body">
+        <form method="POST" id="editItemForm">
+          <div class="row g-3">
+            <div class="col-md-8">
+              <label class="form-label fw-semibold">Item Name <span class="text-danger">*</span></label>
+              <input type="text" name="name" class="form-control" required value="{{ item.name }}"/>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Category <span class="text-danger">*</span></label>
+              <select name="category" class="form-select" required>
+                {% for cat in ['Breakfast','Lunch','Snacks','Beverages'] %}
+                <option value="{{ cat }}" {% if item.category==cat %}selected{% endif %}>{{ cat }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Price (₹) <span class="text-danger">*</span></label>
+              <input type="number" name="price" class="form-control" step="0.01" min="0" required value="{{ item.price }}"/>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Available Quantity</label>
+              <input type="number" name="available_quantity" class="form-control" min="0" value="{{ item.available_quantity }}"/>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Status</label>
+              <select name="status" class="form-select">
+                <option value="available" {% if item.status=='available' %}selected{% endif %}>Available</option>
+                <option value="unavailable" {% if item.status=='unavailable' %}selected{% endif %}>Unavailable</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Available From</label>
+              <input type="time" name="available_from" class="form-control"
+                     value="{{ item.available_from | fmt_time }}"/>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Available To</label>
+              <input type="time" name="available_to" class="form-control"
+                     value="{{ item.available_to | fmt_time }}"/>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Description</label>
+              <textarea name="description" class="form-control" rows="3">{{ item.description or '' }}</textarea>
+            </div>
+          </div>
+          <div class="mt-4 d-flex gap-2">
+            <button type="submit" class="btn btn-orange" id="submitBtn">
+              <span class="spinner-border spinner-border-sm d-none me-1" id="spinner"></span>
+              <i class="bi bi-save me-1"></i>Save Changes
+            </button>
+            <a href="{{ url_for('menu') }}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('editItemForm').addEventListener('submit', function() {
+  document.getElementById('spinner').classList.remove('d-none');
+  document.getElementById('submitBtn').disabled = true;
+});
+</script>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block title %}Add Menu Item{% endblock %}
+{% block page_title %}Add Menu Item{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card shadow-sm">
+      <div class="card-header"><i class="bi bi-plus-circle me-2 text-orange"></i>New Menu Item</div>
+      <div class="card-body">
+        <form method="POST" id="addItemForm">
+          <div class="row g-3">
+            <div class="col-md-8">
+              <label class="form-label fw-semibold">Item Name <span class="text-danger">*</span></label>
+              <input type="text" name="name" class="form-control" required placeholder="e.g. Masala Dosa"/>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Category <span class="text-danger">*</span></label>
+              <select name="category" class="form-select" required>
+                <option value="">Select...</option>
+                {% for cat in ['Breakfast','Lunch','Snacks','Beverages'] %}
+                <option value="{{ cat }}">{{ cat }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Price (₹) <span class="text-danger">*</span></label>
+              <input type="number" name="price" class="form-control" step="0.01" min="0" required placeholder="0.00"/>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Available Quantity <span class="text-danger">*</span></label>
+              <input type="number" name="available_quantity" class="form-control" min="0" required placeholder="0"/>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Available From</label>
+              <input type="time" name="available_from" class="form-control"/>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Available To</label>
+              <input type="time" name="available_to" class="form-control"/>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Description</label>
+              <textarea name="description" class="form-control" rows="3" placeholder="Brief description of the item..."></textarea>
+            </div>
+          </div>
+          <div class="mt-4 d-flex gap-2">
+            <button type="submit" class="btn btn-orange" id="submitBtn">
+              <span class="spinner-border spinner-border-sm d-none me-1" id="spinner"></span>
+              <i class="bi bi-plus-circle me-1"></i>Add Item
+            </button>
+            <a href="{{ url_for('menu') }}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('addItemForm').addEventListener('submit', function() {
+  document.getElementById('spinner').classList.remove('d-none');
+  document.getElementById('submitBtn').disabled = true;
+});
+</script>
+{% endblock %}

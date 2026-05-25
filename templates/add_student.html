@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block title %}Add Student{% endblock %}
+{% block page_title %}Add Student{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card shadow-sm">
+      <div class="card-header"><i class="bi bi-person-plus me-2 text-orange"></i>New Student</div>
+      <div class="card-body">
+        <form method="POST" id="addStudentForm">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Full Name <span class="text-danger">*</span></label>
+              <input type="text" name="name" class="form-control" required placeholder="Student full name"/>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Roll Number <span class="text-danger">*</span></label>
+              <input type="text" name="roll_number" class="form-control" required placeholder="e.g. AM2201"/>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Branch</label>
+              <input type="text" name="branch" class="form-control" placeholder="e.g. Computer Science"/>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-semibold">Year</label>
+              <select name="year" class="form-select">
+                <option value="1">1st Year</option>
+                <option value="2">2nd Year</option>
+                <option value="3">3rd Year</option>
+                <option value="4">4th Year</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-semibold">Prepaid Balance (₹)</label>
+              <input type="number" name="prepaid_balance" class="form-control" step="0.01" min="0" value="0"/>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Phone</label>
+              <input type="text" name="phone" class="form-control" placeholder="10-digit mobile number"/>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Email</label>
+              <input type="email" name="email" class="form-control" placeholder="student@college.edu"/>
+            </div>
+          </div>
+          <div class="mt-4 d-flex gap-2">
+            <button type="submit" class="btn btn-orange" id="submitBtn">
+              <span class="spinner-border spinner-border-sm d-none me-1" id="spinner"></span>
+              <i class="bi bi-person-plus me-1"></i>Add Student
+            </button>
+            <a href="{{ url_for('students') }}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('addStudentForm').addEventListener('submit', function() {
+  document.getElementById('spinner').classList.remove('d-none');
+  document.getElementById('submitBtn').disabled = true;
+});
+</script>
+{% endblock %}

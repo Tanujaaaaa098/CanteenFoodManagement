@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block title %}Notices{% endblock %}
+{% block page_title %}Notices{% endblock %}
+{% block content %}
+<div class="row g-3">
+  <!-- Add Notice Form -->
+  <div class="col-lg-4">
+    <div class="card shadow-sm">
+      <div class="card-header"><i class="bi bi-megaphone me-2 text-orange"></i>Post New Notice</div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('add_notice') }}" id="noticeForm">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Title <span class="text-danger">*</span></label>
+            <input type="text" name="title" class="form-control" required placeholder="Notice title..."/>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Message <span class="text-danger">*</span></label>
+            <textarea name="message" class="form-control" rows="5" required placeholder="Write your notice here..."></textarea>
+          </div>
+          <button type="submit" class="btn btn-orange w-100" id="submitBtn">
+            <span class="spinner-border spinner-border-sm d-none me-1" id="spinner"></span>
+            <i class="bi bi-send me-1"></i>Post Notice
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notices List -->
+  <div class="col-lg-8">
+    {% if notices %}
+    <div class="d-flex flex-column gap-3">
+      {% for n in notices %}
+      <div class="card shadow-sm notice-list-card">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h6 class="fw-bold mb-1 text-orange">{{ n.title }}</h6>
+              <p class="mb-2 text-muted">{{ n.message }}</p>
+              <div class="small text-muted">
+                <i class="bi bi-person me-1"></i>{{ n.admin_name }}
+                <i class="bi bi-calendar3 ms-2 me-1"></i>{{ n.posted_date.strftime('%d %b %Y, %H:%M') if n.posted_date else '' }}
+              </div>
+            </div>
+            <button class="btn btn-sm btn-outline-danger ms-3"
+                    onclick="confirmDelete('{{ url_for('delete_notice', notice_id=n.id) }}','Delete notice &quot;{{ n.title }}&quot;?')">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state py-5">
+      <i class="bi bi-megaphone"></i>
+      <p>No notices posted yet</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('noticeForm').addEventListener('submit', function() {
+  document.getElementById('spinner').classList.remove('d-none');
+  document.getElementById('submitBtn').disabled = true;
+});
+</script>
+{% endblock %}

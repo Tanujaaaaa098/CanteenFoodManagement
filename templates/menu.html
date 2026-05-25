@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% block title %}Menu{% endblock %}
+{% block page_title %}Menu Management{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <form class="d-flex gap-2 flex-wrap" method="GET">
+    <div class="input-group" style="width:220px">
+      <span class="input-group-text bg-white"><i class="bi bi-search text-orange"></i></span>
+      <input type="text" name="search" class="form-control" placeholder="Search items..." value="{{ search }}"/>
+    </div>
+    <select name="category" class="form-select" style="width:160px" onchange="this.form.submit()">
+      <option value="All" {% if category=='All' %}selected{% endif %}>All Categories</option>
+      {% for cat in ['Breakfast','Lunch','Snacks','Beverages'] %}
+      <option value="{{ cat }}" {% if category==cat %}selected{% endif %}>{{ cat }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-orange"><i class="bi bi-funnel me-1"></i>Filter</button>
+    {% if search or category != 'All' %}
+    <a href="{{ url_for('menu') }}" class="btn btn-outline-secondary"><i class="bi bi-x me-1"></i>Clear</a>
+    {% endif %}
+  </form>
+  <a href="{{ url_for('add_menu_item') }}" class="btn btn-orange">
+    <i class="bi bi-plus-circle me-1"></i>Add Item
+  </a>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body p-0">
+    {% if items %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 align-middle">
+        <thead class="table-light">
+          <tr><th>Item Name</th><th>Category</th><th>Price</th><th>Qty</th><th>Time Window</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+        {% for item in items %}
+        <tr class="{% if item.available_quantity < 5 and item.status=='available' %}table-warning{% endif %}">
+          <td>
+            <div class="fw-semibold">{{ item.name }}</div>
+            {% if item.description %}<div class="small text-muted">{{ item.description[:50] }}</div>{% endif %}
+          </td>
+          <td><span class="badge cat-badge cat-{{ item.category|lower }}">{{ item.category }}</span></td>
+          <td class="fw-semibold">₹{{ "%.2f"|format(item.price) }}</td>
+          <td>
+            {% if item.available_quantity < 5 %}
+              <span class="text-danger fw-bold">{{ item.available_quantity }}</span>
+              <i class="bi bi-exclamation-triangle-fill text-warning ms-1" title="Low stock"></i>
+            {% else %}
+              {{ item.available_quantity }}
+            {% endif %}
+          </td>
+          <td class="small text-muted">
+            {% if item.available_from and item.available_to %}
+              {{ item.available_from | fmt_time }} – {{ item.available_to | fmt_time }}
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            <button class="btn btn-sm toggle-btn {% if item.status=='available' %}btn-success{% else %}btn-secondary{% endif %}"
+                    onclick="toggleItem({{ item.id }}, this)" title="Toggle availability">
+              {% if item.status=='available' %}
+                <i class="bi bi-check-circle me-1"></i>Available
+              {% else %}
+                <i class="bi bi-x-circle me-1"></i>Unavailable
+              {% endif %}
+            </button>
+          </td>
+          <td>
+            <a href="{{ url_for('edit_menu_item', item_id=item.id) }}" class="btn btn-sm btn-outline-primary me-1">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <button class="btn btn-sm btn-outline-danger"
+                    onclick="confirmDelete('{{ url_for('delete_menu_item', item_id=item.id) }}','Delete menu item &quot;{{ item.name }}&quot;? This cannot be undone.')">
+              <i class="bi bi-trash"></i>
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state py-5">
+      <i class="bi bi-journal-x"></i>
+      <p>No menu items found{% if search %} for "{{ search }}"{% endif %}</p>
+      <a href="{{ url_for('add_menu_item') }}" class="btn btn-orange mt-2">Add First Item</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function toggleItem(id, btn) {
+  fetch(`/menu/toggle/${id}`, {method:'POST', headers:{'X-Requested-With':'XMLHttpRequest'}})
+    .then(r => r.json()).then(d => {
+      if (d.status === 'ok') {
+        const isAvail = btn.classList.contains('btn-success');
+        btn.classList.toggle('btn-success', !isAvail);
+        btn.classList.toggle('btn-secondary', isAvail);
+        btn.innerHTML = isAvail
+          ? '<i class="bi bi-x-circle me-1"></i>Unavailable'
+          : '<i class="bi bi-check-circle me-1"></i>Available';
+        showToast(isAvail ? 'Item marked unavailable' : 'Item marked available', isAvail ? 'warning' : 'success');
+      }
+    });
+}
+</script>
+{% endblock %}
