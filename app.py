@@ -487,55 +487,83 @@ def order_detail(order_id):
 @login_required
 def add_order():
     if request.method == 'POST':
-        student_id     = int(request.form['student_id'])
+        student_id     = int(request.form.get('student_id', 0))
         pickup_time    = request.form.get('pickup_time', '')
         payment_method = request.form.get('payment_method', 'cash')
-        item_ids       = request.form.getlist('item_id[]')
-        quantities     = request.form.getlist('quantity[]')
+
+        # Get all form data and extract item_id[] and quantity[] safely
+        form_data = request.form.to_dict(flat=False)
+        item_ids  = form_data.get('item_id[]', [])
+        quantities = form_data.get('quantity[]', [])
+
+        app.logger.info(f"Order POST: student={student_id}, items={item_ids}, qtys={quantities}")
 
         order_items_data = []
         total = 0.0
-        for iid, qty in zip(item_ids, quantities):
-            qty = int(qty)
-            if qty <= 0:
+
+        for iid, qty_str in zip(item_ids, quantities):
+            try:
+                qty = int(qty_str)
+            except (ValueError, TypeError):
+                continue
+            if qty <= 0 or not iid:
                 continue
             mi = query("SELECT * FROM menu_items WHERE id=%s AND status='available'", (iid,), one=True)
-            if mi and mi['available_quantity'] >= qty:
+            if mi and int(mi['available_quantity']) >= qty:
                 sub = float(mi['price']) * qty
                 total += sub
                 order_items_data.append((int(iid), qty, float(mi['price']), sub))
 
         if not order_items_data:
-            flash('No valid items or insufficient stock.', 'danger')
-            return redirect(url_for('add_order'))
+            flash('No valid items selected or insufficient stock.', 'danger')
+            students_list   = query("SELECT * FROM students ORDER BY name")
+            menu_items_list = query("SELECT * FROM menu_items WHERE status='available' ORDER BY category, name")
+            return render_template('add_order.html', students=students_list,
+                                   menu_items=menu_items_list, settings=get_settings(), low_stock=get_low_stock())
 
         if payment_method == 'prepaid':
             st = query("SELECT prepaid_balance FROM students WHERE id=%s", (student_id,), one=True)
             if not st or float(st['prepaid_balance']) < total:
                 flash('Insufficient prepaid balance.', 'danger')
-                return redirect(url_for('add_order'))
+                students_list   = query("SELECT * FROM students ORDER BY name")
+                menu_items_list = query("SELECT * FROM menu_items WHERE status='available' ORDER BY category, name")
+                return render_template('add_order.html', students=students_list,
+                                       menu_items=menu_items_list, settings=get_settings(), low_stock=get_low_stock())
 
         pay_status = 'paid' if payment_method == 'prepaid' else 'pending'
         db = get_db()
-        with db.cursor() as cur:
-            cur.execute("""INSERT INTO orders (student_id,pickup_time,total_amount,payment_method,payment_status)
-                           VALUES (%s,%s,%s,%s,%s)""",
-                        (student_id, pickup_time, total, payment_method, pay_status))
-            order_id = cur.lastrowid
-            for iid, qty, unit_price, subtotal in order_items_data:
-                cur.execute("""INSERT INTO order_items (order_id,menu_item_id,quantity,unit_price,subtotal)
-                               VALUES (%s,%s,%s,%s,%s)""", (order_id, iid, qty, unit_price, subtotal))
-                cur.execute("UPDATE menu_items SET available_quantity=available_quantity-%s WHERE id=%s", (qty, iid))
-                cur.execute("UPDATE menu_items SET status='unavailable' WHERE id=%s AND available_quantity<=0", (iid,))
-            cur.execute("""INSERT INTO payments (order_id,student_id,amount,payment_method,status)
-                           VALUES (%s,%s,%s,%s,%s)""", (order_id, student_id, total, payment_method, pay_status))
-            if payment_method == 'prepaid':
-                cur.execute("UPDATE students SET prepaid_balance=prepaid_balance-%s WHERE id=%s", (total, student_id))
-        db.commit()
-        flash(f'Order #{order_id} placed!', 'success')
-        return redirect(url_for('orders'))
+        try:
+            with db.cursor() as cur:
+                cur.execute("""INSERT INTO orders
+                               (student_id, pickup_time, total_amount, payment_method, payment_status)
+                               VALUES (%s, %s, %s, %s, %s)""",
+                            (student_id, pickup_time, total, payment_method, pay_status))
+                order_id = cur.lastrowid
+                for iid, qty, unit_price, subtotal in order_items_data:
+                    cur.execute("""INSERT INTO order_items
+                                   (order_id, menu_item_id, quantity, unit_price, subtotal)
+                                   VALUES (%s, %s, %s, %s, %s)""",
+                                (order_id, iid, qty, unit_price, subtotal))
+                    cur.execute("UPDATE menu_items SET available_quantity = available_quantity - %s WHERE id = %s",
+                                (qty, iid))
+                    cur.execute("UPDATE menu_items SET status='unavailable' WHERE id=%s AND available_quantity <= 0",
+                                (iid,))
+                cur.execute("""INSERT INTO payments
+                               (order_id, student_id, amount, payment_method, status)
+                               VALUES (%s, %s, %s, %s, %s)""",
+                            (order_id, student_id, total, payment_method, pay_status))
+                if payment_method == 'prepaid':
+                    cur.execute("UPDATE students SET prepaid_balance = prepaid_balance - %s WHERE id = %s",
+                                (total, student_id))
+            db.commit()
+            flash(f'Order #{order_id} placed successfully!', 'success')
+            return redirect(url_for('orders'))
+        except Exception as e:
+            db.rollback()
+            app.logger.error(f"Order placement failed: {e}")
+            flash(f'Error placing order: {str(e)}', 'danger')
 
-    students_list  = query("SELECT * FROM students ORDER BY name")
+    students_list   = query("SELECT * FROM students ORDER BY name")
     menu_items_list = query("SELECT * FROM menu_items WHERE status='available' ORDER BY category, name")
     return render_template('add_order.html', students=students_list,
                            menu_items=menu_items_list, settings=get_settings(), low_stock=get_low_stock())
