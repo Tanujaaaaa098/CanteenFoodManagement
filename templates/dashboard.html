@@ -55,7 +55,7 @@
               <td class="text-muted small">#{{ o.id }}</td>
               <td class="fw-semibold">{{ o.student_name }}</td>
               <td class="small text-muted">
-                {% for item in o.items %}{{ item.name }}{% if not loop.last %}, {% endif %}{% endfor %}
+                {% for item in o['order_items'] %}{{ item.name }}{% if not loop.last %}, {% endif %}{% endfor %}
               </td>
               <td>₹{{ "%.0f"|format(o.total_amount) }}</td>
               <td>

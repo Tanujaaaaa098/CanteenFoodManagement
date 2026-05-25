@@ -281,7 +281,7 @@ def dashboard():
                             FROM orders o JOIN students s ON o.student_id=s.id
                             WHERE DATE(o.created_date)=%s ORDER BY o.order_time DESC""", (today,))
     for o in today_orders:
-        o['items'] = query("""SELECT mi.name, oi.quantity FROM order_items oi
+        o['order_items'] = query("""SELECT mi.name, oi.quantity FROM order_items oi
                               JOIN menu_items mi ON oi.menu_item_id=mi.id
                               WHERE oi.order_id=%s""", (o['id'],))
 
@@ -470,7 +470,7 @@ def orders():
     sql += " ORDER BY o.created_date DESC"
     orders_list = query(sql, params)
     for o in orders_list:
-        o['items'] = query("""SELECT mi.name, oi.quantity, oi.unit_price, oi.subtotal
+        o['order_items'] = query("""SELECT mi.name, oi.quantity, oi.unit_price, oi.subtotal
                               FROM order_items oi JOIN menu_items mi ON oi.menu_item_id=mi.id
                               WHERE oi.order_id=%s""", (o['id'],))
     return render_template('orders.html', orders=orders_list, period=period,

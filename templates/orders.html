@@ -41,7 +41,7 @@
             <div class="small text-muted">{{ o.roll_number }}</div>
           </td>
           <td class="small text-muted" style="max-width:180px">
-            {% for item in o.items %}{{ item.name }} x{{ item.quantity }}{% if not loop.last %}, {% endif %}{% endfor %}
+            {% for item in o['order_items'] %}{{ item.name }} x{{ item.quantity }}{% if not loop.last %}, {% endif %}{% endfor %}
           </td>
           <td class="fw-semibold">₹{{ "%.2f"|format(o.total_amount) }}</td>
           <td class="small text-muted">{{ o.order_time.strftime('%H:%M') if o.order_time else '' }}</td>
